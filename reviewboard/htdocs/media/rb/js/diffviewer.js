@@ -73,6 +73,22 @@ var gActions = [
     { // Go to footer
         keys: "GU:",
         onPress: function() {}
+    },
+
+    { // Show review form
+        keys: "r",
+        onPress: function() { $.reviewForm(gReviewRequest.createReview()); }
+    },
+
+    { // Submit shipit review
+        keys: "R",
+        onPress: function() {
+          var review = gReviewRequest.createReview();
+          review.shipit = 1;
+          review.publish({
+            success: function() { window.location = gReviewRequestPath; }
+          });
+        }
     }
 ];
 
@@ -1052,7 +1068,6 @@ function addCommentFlags(table, lines, key) {
 /*
  * Expands a chunk of the diff.
  *
- * @param {string} review_base_url     The URL of the review request.
  * @param {string} fileid              The file ID.
  * @param {string} filediff_id         The FileDiff ID.
  * @param {string} revision            The revision of the file.
@@ -1060,10 +1075,10 @@ function addCommentFlags(table, lines, key) {
  * @param {int}    chunk_index         The chunk index number.
  * @param {string} tbody_id            The tbody ID to insert into.
  */
-function expandChunk(review_base_url, fileid, filediff_id, revision,
-                     interdiff_revision, chunk_index, link) {
-    gDiff.getDiffFragment(review_base_url, fileid, filediff_id, revision,
-                          interdiff_revision, chunk_index, function(html) {
+function expandChunk(fileid, filediff_id, revision, interdiff_revision,
+                     chunk_index, link) {
+    gDiff.getDiffFragment(fileid, filediff_id, revision, interdiff_revision,
+                          chunk_index, function(html) {
         var tbody = $(link).parents("tbody.diff-header");
         var table = tbody.parent();
         var key = "file" + filediff_id;
@@ -1166,7 +1181,6 @@ function updateAnchors(table) {
  * When the diff is loaded, it will be placed into the appropriate location
  * in the diff viewer, rebuild the anchors, and move on to the next file.
  *
- * @param {string} review_base_url           The URL of the review request
  * @param {string} filediff_id               The filediff ID
  * @param {string} filediff_revision         The filediff revision
  * @param {string} interfilediff_id          The interfilediff ID (optional)
@@ -1175,15 +1189,17 @@ function updateAnchors(table) {
  * @param {string} file_index                The file index
  * @param {dict}   comment_counts            The comments for this region
  */
-function loadFileDiff(review_base_url, filediff_id, filediff_revision,
-                      interfilediff_id, interfilediff_revision, file_index,
+function loadFileDiff(filediff_id, filediff_revision,
+                      interfilediff_id, interfilediff_revision,
+                      file_index,
                       comment_counts) {
+
     if ($("#file" + filediff_id).length == 1) {
         /* We already have this one. This is probably a pre-loaded file. */
         setupFileDiff();
     } else {
         $.funcQueue("diff_files").add(function() {
-            gDiff.getDiffFile(review_base_url, filediff_id, filediff_revision,
+            gDiff.getDiffFile(filediff_id, filediff_revision,
                               interfilediff_id, interfilediff_revision,
                               file_index, onFileLoaded);
         });
